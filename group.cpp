@@ -12,21 +12,21 @@
 #include "group.h"
 #include "process.h"
 
-// static
-Group* Group::look_up_group(int group_id)
-{
-	return group_id_table[group_id];
-}
-
 Group::Group (Process* creator, double time_stamp)
 {
 	this->creator = creator;
 	creation_time = time_stamp;
 
-	id = group_count++;
-	group_id_table[id] = this;
+	group_id = group_count++;
+	group_id_table[group_id] = this;
 
 	pthread_create(&check_failure_thread, NULL, check_failure_helper, (void*)this);
+}
+
+// static
+Group* Group::look_up_group(int group_id)
+{
+	return group_id_table[group_id];
 }
 
 // static
@@ -41,7 +41,7 @@ void Group::check_failure()
 {
 	sleep(PI);
 
-	print("Time to check failure");
+	print("\nTime to check failure in group " + to_string(group_id));
 
 	int list_size = members.size();
 	for (int i = 0; i < list_size; i++)
@@ -67,28 +67,35 @@ void Group::check_failure()
 
 double Group::get_id()
 {
-	return id;
+	return group_id;
 }
 
-int Group::get_group_size()
+vector<Process*> Group::print_members_list()
 {
-	return members.size();
+	print("Group: " + to_string(group_id));
+
+	int members_size = members.size();
+	for (int i = 0; i < members_size; i++)
+	{
+			print("Process " + to_string(members[i]->get_process_id()));
+	}
+	print("");
 }
 
-vector<Process*> Group::get_members_list()
+void Group::add_member(Process* p)
 {
-	return members;
-}
-
-void Group::add_member(Process* p, int p_id)
-{
+	print("Process " + to_string(p->get_process_id()) + " is joining group " + to_string(group_id));
 	members.push_back(p);
-
-	// p_id is only for printing 
-	print("Process " + to_string(p_id) + " is joining group " + to_string(id));
 }
 
 void Group::remove_member(Process* p)
 {
+	print("Process " + to_string(p->get_process_id()) + " is leaving group " + to_string(group_id));
 	members.erase(find(members.begin(), members.end(), p));
+
+	// If the last member just left, delete the group?
+	if (members.size() <= 0)
+	{
+		print("All members have left group" + to_string(group_id));
+	}
 }

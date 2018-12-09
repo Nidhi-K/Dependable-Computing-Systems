@@ -18,6 +18,8 @@ int process_count = 0;
 unordered_map<int, Group*> group_id_table;
 int group_count = 0;
 
+int atomic_message_count = 0;
+
 pthread_mutex_t print_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 typedef struct timeval TimeStamp;
@@ -45,6 +47,26 @@ double get_current_time()
 	return time;
 }
 
+void make_some_processors_fail(double probability) {
+
+	int list_size = process_list.size();
+	for (int i = 0; i < list_size; i++)
+	{
+		double r = rand();
+		if (r < probability)
+		{
+			process_list[i]->fail();
+		}
+	}
+}
+
+void make_specific_processor_fail(int i) {
+	// we don't have a way to go from id -> process 
+	// Instead you have to specify the index in the process_list array
+
+	process_list[i]->fail();
+}
+
 void atomic_broadcast_protocol(int n, int initiator_id)
 {
 
@@ -61,6 +83,10 @@ void atomic_broadcast_protocol(int n, int initiator_id)
 
 	// 0 initiates the broadcast
 	process_list[initiator_id]->send_atomic_broadcast_p1(Message(NEW_GROUP));
+
+	sleep(FAIL_TIME);
+
+	make_specific_processor_fail(1);
 }
 
 void print_all_data()
@@ -79,20 +105,18 @@ void print_all_data()
 	unordered_map<int, Group*>::iterator it;
 	for (it = group_id_table.begin(); it != group_id_table.end(); it++)
 	{
-		print("Group: " + to_string(it->first));
-
-		vector<Process*> members = (it->second)->get_members_list();
-		int members_size = members.size();
-		for (int i = 0; i < members_size; i++)
-		{
-			print("Process " + to_string(process_list[i]->get_process_id()));
-		}
+		it->second->print_members_list();
 	}
+
+	print("Total atomic messages sent: " + to_string(atomic_message_count));
 
 }
 
 int main(int argc, char *argv[])
 {
+	// Seeding the rng to the current time (aka not seeding it)
+	srand (time(NULL));
+
 	if (argc < 2)
 	{
 		print("Missing args. Abort!!!");
@@ -103,7 +127,7 @@ int main(int argc, char *argv[])
 	
 	atomic_broadcast_protocol(stoi(argv[1]), 0);
 
-	sleep(10);
+	sleep(PROGRAM_EXEC_TIME);
 
 	double duration = get_current_time();
 	print("Time elapsed is " + to_string(duration) + " milliseconds.");

@@ -5,7 +5,7 @@ class Process
 {
 	private:
 
-	// int group_id;
+	int group_id;
 	int process_id;
 
 	typedef struct thread_args
@@ -19,6 +19,10 @@ class Process
 	vector<int> other_members;
 	vector<bool> checked;
 
+	bool active;
+
+	void leave_group();
+
 	public:
 
 	Process(int id);
@@ -29,6 +33,8 @@ class Process
 
 	void check_failure_p1();
 
+	void fail();
+
 	void send_atomic_broadcast_p1(Message m);
 
 	static void* atomic_broadcast_thread_helper(void* args);
@@ -36,6 +42,7 @@ class Process
 	void receive_atomic_broadcast_p1(Process* sender, Message m);
 
 	int get_process_id() const;
+	int get_group_id();
 
 	bool operator==(const Process rhs);
 };

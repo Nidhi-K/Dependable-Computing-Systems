@@ -11,10 +11,11 @@ Message::Message(MessageContent c)
 	content = c;
 }
 
-Message::Message(MessageContent content, int more_information)
+Message::Message(MessageContent content, int group_id)
 {
 	time_stamp = get_current_time();
 	this->content = content;
+	this->group_id = group_id;
 }
 
 void Message::set_group_id(int id)

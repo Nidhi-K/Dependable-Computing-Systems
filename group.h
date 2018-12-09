@@ -7,7 +7,7 @@ class Group
 	double creation_time;
 	Process* creator;
 
-	int id;
+	int group_id;
 	vector<Process*> members;
 
 	pthread_t check_failure_thread;
@@ -24,11 +24,9 @@ class Group
 
 	double get_id();
 
-	int get_group_size();
+	vector<Process*> print_members_list();
 
-	vector<Process*> get_members_list();
-
-	void add_member(Process* p, int p_id);
+	void add_member(Process* p);
 
 	void remove_member(Process* p);
 };

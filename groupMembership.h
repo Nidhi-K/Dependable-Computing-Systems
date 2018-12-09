@@ -1,7 +1,10 @@
 #define NO_GROUP -1
 #define BIG_DELTA 1
 
-#define PI 3
+#define PI 5
+
+#define FAIL_TIME 2
+#define PROGRAM_EXEC_TIME 15
 
 using namespace std;
 
@@ -13,6 +16,9 @@ extern int process_count;
 
 extern unordered_map<int, Group*> group_id_table;
 extern int group_count;
+
+extern int atomic_message_count;
+extern int datagram_message_count;
 
 enum MessageContent {NEW_GROUP, PRESENT_ADD, PRESENT_CHECK};
 

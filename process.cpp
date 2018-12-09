@@ -16,7 +16,8 @@
 Process::Process(int id)
 {
 	process_id = id;
-	// group_id = NO_GROUP;
+	active = true;
+	group_id = NO_GROUP;
 }
 
 void Process::init_check_array()
@@ -26,24 +27,81 @@ void Process::init_check_array()
 
 void Process::send_check_p1()
 {
-	send_atomic_broadcast_p1(Message(PRESENT_CHECK));
+	send_atomic_broadcast_p1(Message(PRESENT_CHECK, group_id));
 }
 
 void Process::check_failure_p1()
 {
+	if (!active){
+		return;
+	}
+
+	bool failed = false;
 	int checked_list_size = checked.size();
 	for (int i = 0; i < checked_list_size; i++)
 	{
 		if (!checked[i])
 		{
-			print("Oh no! " + to_string(i) + "   " + to_string(get_process_id()));
+			print("checked list size " + to_string(checked_list_size) + " i is " + to_string(i));
+
+			print("~~~~Process " + to_string(process_id) + " sees that process " +
+						to_string(other_members[i]) + " has failed!");
+			failed = true;
+			break;
 		}
 	}
+
+	// If everything is good you can leave now
+	if (!failed)
+	{
+		return;
+	}
+
+	// Find out if you are the leader
+	// This will minimize conflicts
+	int list_size = other_members.size();
+	for (int i = 0; i < list_size; i++)
+	{
+		if (other_members[i] < process_id)
+		{
+			return;
+		}
+	}
+
+	// If you have reached this point you are the leader and
+	// it is your responsibility to create a new group
+	print("Process " + to_string(process_id) + " will create a new group!");
+
+	// send_atomic_broadcast_p1(Message(NEW_GROUP));
+}
+
+// private
+void Process::leave_group()
+{
+	if (group_id >= 0)
+	{
+		group_id_table[this->group_id]->remove_member(this);
+	}
+
+	group_id = NO_GROUP;
+}
+
+void Process::fail()
+{
+	print("\nProcess " + to_string(process_id) + " failed!\n");
+	active = false;
 }
 
 void Process::send_atomic_broadcast_p1(Message m)
 {
+	if (!active)
+	{
+		return;
+	}
+
 	print(to_string(process_id) + " sends atomic broadcast : " + m.get_content_str());
+
+	atomic_message_count++;
 
 	if (m.get_content() == NEW_GROUP)
 	{
@@ -52,8 +110,18 @@ void Process::send_atomic_broadcast_p1(Message m)
 		// stored in the group_id_array
 		Group* group = new Group(this, m.get_time_stamp() + BIG_DELTA);
 		m.set_group_id(group->get_id());
-		group->add_member(this, process_id);
-	}
+
+		// if (group_id >= 0)
+		// {
+		// 	// Leave your current group
+		// 	group_id_table[this->group_id]->remove_member(this);
+		// }
+		
+		leave_group();
+
+		group->add_member(this);
+		this->group_id = group->get_id();
+	} 
 
 	int list_size = process_list.size();
 
@@ -63,6 +131,7 @@ void Process::send_atomic_broadcast_p1(Message m)
 
 	for (int i = 0; i < list_size; i++)
 	{
+		// Don't send it to yourself
 		if (process_list[i]->get_process_id() == process_id)
 		{
 			continue;
@@ -103,6 +172,7 @@ void Process::send_atomic_broadcast_p1(Message m)
 void* Process::atomic_broadcast_thread_helper(void* args)
 {
 	ThreadArgs* thread_args = (ThreadArgs*)args;
+
 	static_cast<Process*>(thread_args->receiver)->receive_atomic_broadcast_p1(thread_args->sender, thread_args->message);
 
 	pthread_exit(NULL);
@@ -116,29 +186,48 @@ void* Process::atomic_broadcast_thread_helper(void* args)
 
 void Process::receive_atomic_broadcast_p1(Process* sender, Message m)
 {
+	if (!active)
+	{
+		return;
+	}
+
 	print(to_string(process_id) + " received atomic broadcast from " +
 		to_string(sender->get_process_id()) + " : " + m.get_content_str());
-
-	// sleep(1);
 
 	switch (m.get_content())
 	{
 		case NEW_GROUP:
 		{
-			send_atomic_broadcast_p1(PRESENT_ADD);
-
-			Group* group = group_id_table[m.get_group_id()];
-			group->add_member(this, process_id);
-
+			// It should be guaranteed that everyone finishes receives this before 
+			// receiving present checks but is it?
 			other_members.clear();
 			other_members.push_back(sender->get_process_id());
+
+			leave_group();
+
+			Group* new_group = group_id_table[m.get_group_id()];
+			new_group->add_member(this);
+			group_id = m.get_group_id();
+
+
+			sleep(BIG_DELTA);
+
+			send_atomic_broadcast_p1(Message(PRESENT_ADD, group_id));
+			
+			// print(to_string(process_id) + " now size is " + to_string(other_members.size()));
 
 			break;
 		}
 		case PRESENT_ADD:
 		{
-			// redo this ?
+			// Make sure this message applies to your group
+			if (m.get_group_id() != group_id)
+			{
+				break;
+			}
+
 			other_members.push_back(sender->get_process_id());
+			print(to_string(process_id) + " Other members size " + to_string(other_members.size()));
 
 			break;
 		}
@@ -161,6 +250,11 @@ void Process::receive_atomic_broadcast_p1(Process* sender, Message m)
 int Process::get_process_id() const
 {
 	return process_id;
+}
+
+int Process::get_group_id()
+{
+	return group_id;
 }
 
 bool Process::operator==(const Process rhs)
