@@ -9,7 +9,7 @@ class Message
 
 	Message(MessageContent c);
 
-	Message(MessageContent content, int more_information);
+	Message(MessageContent content, int group_id);
 
 	void set_group_id(int id);
 

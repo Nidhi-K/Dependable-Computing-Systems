@@ -22,7 +22,7 @@ class Group
 
 	void check_failure();
 
-	double get_id();
+	int get_id();
 
 	vector<Process*> print_members_list();
 

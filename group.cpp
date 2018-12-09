@@ -56,16 +56,37 @@ void Group::check_failure()
 
 	sleep(BIG_DELTA);
 
+	int idx_to_create = -1;
+
+	int failed = 0;
+
 	for (int i = 0; i < list_size; i++)
 	{
-		members[i]->check_failure_p1();
+		int result = members[i]->check_failure_p1();
+
+		if (result < 0) {
+			continue;
+		}
+
+		if (idx_to_create < 0) {
+			idx_to_create = i;
+		}
+
+		failed += result;
+	}
+
+	if (failed != 0) {
+		print(to_string(failed) + " processes detected a failure.");
+
+		// choose a member to create the next group
+		process_list[idx_to_create]->send_atomic_broadcast_p1(Message(NEW_GROUP));
 	}
 
 	pthread_join(check_failure_thread, NULL);
 	pthread_create(&check_failure_thread, NULL, check_failure_helper, (void*)this);
 }
 
-double Group::get_id()
+int Group::get_id()
 {
 	return group_id;
 }

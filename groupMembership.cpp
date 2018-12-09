@@ -81,8 +81,11 @@ void atomic_broadcast_protocol(int n, int initiator_id)
 		process_list.push_back(new Process(process_count++));
 	}
 
-	// 0 initiates the broadcast
+	// P0 initiates the broadcast
+
 	process_list[initiator_id]->send_atomic_broadcast_p1(Message(NEW_GROUP));
+
+	print(to_string(get_current_time()));
 
 	sleep(FAIL_TIME);
 

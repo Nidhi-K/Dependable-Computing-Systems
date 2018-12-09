@@ -30,10 +30,10 @@ void Process::send_check_p1()
 	send_atomic_broadcast_p1(Message(PRESENT_CHECK, group_id));
 }
 
-void Process::check_failure_p1()
+int Process::check_failure_p1()
 {
 	if (!active){
-		return;
+		return -1;
 	}
 
 	bool failed = false;
@@ -42,35 +42,37 @@ void Process::check_failure_p1()
 	{
 		if (!checked[i])
 		{
-			print("checked list size " + to_string(checked_list_size) + " i is " + to_string(i));
+			// print("checked list size " + to_string(checked_list_size) + " i is " + to_string(i));
 
-			print("~~~~Process " + to_string(process_id) + " sees that process " +
+			print("Process " + to_string(process_id) + " sees that process " +
 						to_string(other_members[i]) + " has failed!");
 			failed = true;
 			break;
 		}
 	}
 
-	// If everything is good you can leave now
-	if (!failed)
-	{
-		return;
-	}
+	return failed ? 1 : 0;
 
-	// Find out if you are the leader
-	// This will minimize conflicts
-	int list_size = other_members.size();
-	for (int i = 0; i < list_size; i++)
-	{
-		if (other_members[i] < process_id)
-		{
-			return;
-		}
-	}
+	// // If everything is good you can leave now
+	// if (!failed)
+	// {
+	// 	return;
+	// }
 
-	// If you have reached this point you are the leader and
-	// it is your responsibility to create a new group
-	print("Process " + to_string(process_id) + " will create a new group!");
+	// // Find out if you are the leader
+	// // This will minimize conflicts
+	// int list_size = other_members.size();
+	// for (int i = 0; i < list_size; i++)
+	// {
+	// 	if (other_members[i] < process_id)
+	// 	{
+	// 		return;
+	// 	}
+	// }
+
+	// // If you have reached this point you are the leader and
+	// // it is your responsibility to create a new group
+	// print("Process " + to_string(process_id) + " will create a new group!");
 
 	// send_atomic_broadcast_p1(Message(NEW_GROUP));
 }
@@ -88,7 +90,7 @@ void Process::leave_group()
 
 void Process::fail()
 {
-	print("\nProcess " + to_string(process_id) + " failed!\n");
+	print("\nProcess " + to_string(process_id) + " failed at " + to_string(get_current_time()) + "\n");
 	active = false;
 }
 
@@ -191,6 +193,9 @@ void Process::receive_atomic_broadcast_p1(Process* sender, Message m)
 		return;
 	}
 
+	// To simulate that an atomic broadcast may take some time to arrive
+	// sleep(BIG_DELTA);
+
 	print(to_string(process_id) + " received atomic broadcast from " +
 		to_string(sender->get_process_id()) + " : " + m.get_content_str());
 
@@ -210,7 +215,7 @@ void Process::receive_atomic_broadcast_p1(Process* sender, Message m)
 			group_id = m.get_group_id();
 
 
-			sleep(BIG_DELTA);
+			// sleep(BIG_DELTA);
 
 			send_atomic_broadcast_p1(Message(PRESENT_ADD, group_id));
 			
@@ -227,7 +232,6 @@ void Process::receive_atomic_broadcast_p1(Process* sender, Message m)
 			}
 
 			other_members.push_back(sender->get_process_id());
-			print(to_string(process_id) + " Other members size " + to_string(other_members.size()));
 
 			break;
 		}

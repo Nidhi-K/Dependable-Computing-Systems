@@ -3,8 +3,8 @@
 
 #define PI 5
 
-#define FAIL_TIME 2
-#define PROGRAM_EXEC_TIME 15
+#define FAIL_TIME 3
+#define PROGRAM_EXEC_TIME 10
 
 using namespace std;
 

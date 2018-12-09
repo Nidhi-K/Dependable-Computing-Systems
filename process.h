@@ -23,7 +23,7 @@ class Process
 
 	void leave_group();
 
-	public:
+	public:	
 
 	Process(int id);
 
@@ -31,7 +31,7 @@ class Process
 
 	void send_check_p1();
 
-	void check_failure_p1();
+	int check_failure_p1();
 
 	void fail();
 
