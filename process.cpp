@@ -22,7 +22,12 @@ Process::Process(int id)
 
 void Process::init_check_array()
 {
-	checked.resize(other_members.size(), false);
+	checked.resize(other_members.size());
+
+	int checked_list_size = checked.size();
+	for (int i = 0; i < checked_list_size; i++){
+		checked[i] = false;
+	}
 }
 
 void Process::send_check_p1()
@@ -94,6 +99,10 @@ void Process::fail()
 	active = false;
 }
 
+bool Process::is_active() {
+	return active;
+}
+
 void Process::send_atomic_broadcast_p1(Message m)
 {
 	if (!active)
@@ -103,7 +112,7 @@ void Process::send_atomic_broadcast_p1(Message m)
 
 	print(to_string(process_id) + " sends atomic broadcast : " + m.get_content_str());
 
-	atomic_message_count++;
+	atomic_messages_sent++;
 
 	if (m.get_content() == NEW_GROUP)
 	{
@@ -193,11 +202,10 @@ void Process::receive_atomic_broadcast_p1(Process* sender, Message m)
 		return;
 	}
 
-	// To simulate that an atomic broadcast may take some time to arrive
-	// sleep(BIG_DELTA);
-
 	print(to_string(process_id) + " received atomic broadcast from " +
 		to_string(sender->get_process_id()) + " : " + m.get_content_str());
+
+	atomic_messages_received++;
 
 	switch (m.get_content())
 	{

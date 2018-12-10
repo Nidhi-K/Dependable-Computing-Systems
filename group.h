@@ -12,6 +12,8 @@ class Group
 
 	pthread_t check_failure_thread;
 
+	bool active;
+
 	public:
 
 	Group (Process* creator, double time_stamp);

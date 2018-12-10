@@ -3,8 +3,8 @@
 
 #define PI 5
 
-#define FAIL_TIME 3
-#define PROGRAM_EXEC_TIME 10
+#define FAIL_TIME 12
+#define PROGRAM_EXEC_TIME 150
 
 using namespace std;
 
@@ -17,8 +17,8 @@ extern int process_count;
 extern unordered_map<int, Group*> group_id_table;
 extern int group_count;
 
-extern int atomic_message_count;
-extern int datagram_message_count;
+extern int atomic_messages_sent;
+extern int atomic_messages_received;
 
 enum MessageContent {NEW_GROUP, PRESENT_ADD, PRESENT_CHECK};
 

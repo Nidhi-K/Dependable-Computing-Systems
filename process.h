@@ -21,11 +21,11 @@ class Process
 
 	bool active;
 
-	void leave_group();
-
 	public:	
 
 	Process(int id);
+
+	void leave_group();
 
 	void init_check_array();
 
@@ -34,6 +34,7 @@ class Process
 	int check_failure_p1();
 
 	void fail();
+	bool is_active();
 
 	void send_atomic_broadcast_p1(Message m);
 

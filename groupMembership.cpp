@@ -18,7 +18,8 @@ int process_count = 0;
 unordered_map<int, Group*> group_id_table;
 int group_count = 0;
 
-int atomic_message_count = 0;
+int atomic_messages_sent = 0;
+int atomic_messages_received = 0;
 
 pthread_mutex_t print_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -52,7 +53,7 @@ void make_some_processors_fail(double probability) {
 	int list_size = process_list.size();
 	for (int i = 0; i < list_size; i++)
 	{
-		double r = rand();
+		double r = (double)rand() / RAND_MAX;
 		if (r < probability)
 		{
 			process_list[i]->fail();
@@ -87,9 +88,14 @@ void atomic_broadcast_protocol(int n, int initiator_id)
 
 	print(to_string(get_current_time()));
 
-	sleep(FAIL_TIME);
+	// sleep(FAIL_TIME);
+	// make_specific_processor_fail(1);
 
-	make_specific_processor_fail(1);
+	while (get_current_time() < 1000 * PROGRAM_EXEC_TIME) {
+		sleep(FAIL_TIME);
+		make_some_processors_fail(0.05);
+	}
+	
 }
 
 void print_all_data()
@@ -111,14 +117,13 @@ void print_all_data()
 		it->second->print_members_list();
 	}
 
-	print("Total atomic messages sent: " + to_string(atomic_message_count));
-
+	print("Total atomic messages sent: " + to_string(atomic_messages_sent));
+	print("Total atomic messages received: " + to_string(atomic_messages_received));
 }
 
 int main(int argc, char *argv[])
 {
-	// Seeding the rng to the current time (aka not seeding it)
-	srand (time(NULL));
+	srand (386);
 
 	if (argc < 2)
 	{

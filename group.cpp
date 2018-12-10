@@ -20,7 +20,10 @@ Group::Group (Process* creator, double time_stamp)
 	group_id = group_count++;
 	group_id_table[group_id] = this;
 
+	active = true;
+
 	pthread_create(&check_failure_thread, NULL, check_failure_helper, (void*)this);
+	// pthread_join(check_failure_thread, NULL);
 }
 
 // static
@@ -39,51 +42,54 @@ void* Group::check_failure_helper(void* group)
 
 void Group::check_failure()
 {
-	sleep(PI);
+	while (active) {
 
-	print("\nTime to check failure in group " + to_string(group_id));
+		sleep(PI);
 
-	int list_size = members.size();
-	for (int i = 0; i < list_size; i++)
-	{
-		members[i]->init_check_array();
-	}
+		print("\nTime to check failure in group " + to_string(group_id));
 
-	for (int i = 0; i < list_size; i++)
-	{
-		members[i]->send_check_p1();
-	}
-
-	sleep(BIG_DELTA);
-
-	int idx_to_create = -1;
-
-	int failed = 0;
-
-	for (int i = 0; i < list_size; i++)
-	{
-		int result = members[i]->check_failure_p1();
-
-		if (result < 0) {
-			continue;
+		int list_size = members.size();
+		for (int i = 0; i < list_size; i++)
+		{
+			members[i]->init_check_array();
 		}
 
-		if (idx_to_create < 0) {
-			idx_to_create = i;
+		for (int i = 0; i < list_size; i++)
+		{
+			members[i]->send_check_p1();
 		}
 
-		failed += result;
+		// sleep(BIG_DELTA);
+
+		int idx_to_create = -1;
+
+		int failed = 0;
+
+		for (int i = 0; i < list_size; i++)
+		{
+			int result = members[i]->check_failure_p1();
+
+			if (result < 0) {
+				continue;
+			}
+
+			if (idx_to_create < 0) {
+				idx_to_create = i;
+			}
+
+			failed += result;
+		}
+
+		if (failed != 0) {
+			print(to_string(failed) + " processes detected a failure.");
+
+			// choose a member to create the next group
+			process_list[idx_to_create]->send_atomic_broadcast_p1(Message(NEW_GROUP));
+		}
 	}
 
-	if (failed != 0) {
-		print(to_string(failed) + " processes detected a failure.");
-
-		// choose a member to create the next group
-		process_list[idx_to_create]->send_atomic_broadcast_p1(Message(NEW_GROUP));
-	}
-
-	pthread_join(check_failure_thread, NULL);
-	pthread_create(&check_failure_thread, NULL, check_failure_helper, (void*)this);
+	// pthread_join(check_failure_thread, NULL);
+	// pthread_create(&check_failure_thread, NULL, check_failure_helper, (void*)this);
 }
 
 int Group::get_id()
@@ -115,8 +121,24 @@ void Group::remove_member(Process* p)
 	members.erase(find(members.begin(), members.end(), p));
 
 	// If the last member just left, delete the group?
-	if (members.size() <= 0)
+
+	int active_members = 0;
+
+	int members_size = members.size();
+	for (int i = 0; i < members_size; i++) {
+		if (members[i]->is_active()) {
+			active_members++;
+		}
+	}
+
+	if (active_members <= 0)
 	{
-		print("All members have left group" + to_string(group_id));
+		print("All members have left group " + to_string(group_id));
+		active = false;
+		pthread_join(check_failure_thread, NULL);
+
+		for (int i = 0; i < members_size; i++) {
+			members[i]->leave_group();
+		}
 	}
 }
