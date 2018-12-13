@@ -1,3 +1,5 @@
+// Periodic Broadcast Protocol
+
 class Group;
 class Message;
 

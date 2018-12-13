@@ -1,9 +1,0 @@
-hailey@wozzeck:/v/filer5b/v20q001/hailey/Documents/dcs/final$ ./groups.out 50 > out2.txt
-*** Error in `./groups.out': double free or corruption (!prev)*** Error in `./groups.out': double free or corruption (!prev): 0x00007f7c80000eb0 ***
-: 0x00007f7c80000eb0 ***
-*** Error in `./groups.out': double free or corruption (!prev): 0x00007f7c80000eb0 ***
-*** Error in `./groups.out': double free or corruption (!prev): 0x00007f7c80000eb0 ***
-*** Error in `./groups.out': double free or corruption (!prev): 0x00007f7c80000eb0 ***
-*** Error in `./groups.out': double free or corruption (!prev): 0x00007f7c80000eb0 ***
-Aborted (core dumped)
-hailey@wozzeck:/v/filer5b/v20q001/hailey/Documents/dcs/final$ 

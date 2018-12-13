@@ -1,3 +1,5 @@
+// Periodic Broadcast Membership Protocol
+
 class Process;
 
 class Group
