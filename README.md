@@ -1,4 +1,7 @@
+# Overview
 Implementation of Periodic Broadcast Group Membership Protocol as per Flaviu Cristian's description in "Reaching Agreement on Processor Group Membership in Synchronous Distributed Systems". </br>
+
+#
 <br/>
 To compile and run: <br/>
 `make` <br/>
