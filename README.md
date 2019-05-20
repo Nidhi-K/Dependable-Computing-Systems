@@ -4,7 +4,7 @@ Implementation of Periodic Broadcast Group Membership Protocol as per Flaviu Cri
 #
 <br/>
 To compile and run: <br/>
-`make` <br/>
+```make``` <br/>
 `./groups.out <number of processes>` <br/>
 </br>
 OR <br/>
